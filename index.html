@@ -4,7 +4,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <HTML>
  <HEAD>
-  <TITLE> 爱心粒子+字符雨 </TITLE>
+  <TITLE> 爱心粒子+字符雨+跳动文字 </TITLE>
   <META NAME="Generator" CONTENT="EditPlus">
   <META NAME="Author" CONTENT="">
   <META NAME="Keywords" CONTENT="">
@@ -92,6 +92,13 @@
         effect: -0.75, // 粒子效果参数
         size:      30, // 粒子尺寸(像素)
       },
+      // 新增：文字跳动配置
+      textBeat: {
+        baseSize: 80,    // 文字基础大小(px)
+        beatAmplitude: 0.15, // 跳动幅度（0-1，1=100%缩放）
+        beatFrequency: 1.5,  // 跳动频率（次/秒）
+        posOffsetAmplitude: 5 // 位置偏移幅度(px)
+      }
     };
  
     /*
@@ -293,20 +300,35 @@
         particles.update(deltaTime);
         particles.draw(context, image);
 
-        // ========== 新增：绘制“冰冰”文字 ==========
+        // ========== 新增：跳动的“冰冰”文字 ==========
         context.save(); // 保存当前画布状态
-        // 设置文字样式
-        context.font = "bold 80px Microsoft YaHei, SimHei, Arial"; // 加粗+大号字体+兼容中文字体
+        
+        // 1. 计算心跳动画因子（正弦函数实现周期性缩放/偏移）
+        var beatTime = newTime * settings.textBeat.beatFrequency; // 随时间变化的频率因子
+        var beatScale = 1 + Math.sin(beatTime) * settings.textBeat.beatAmplitude; // 缩放比例（1±15%）
+        var beatYOffset = Math.sin(beatTime) * settings.textBeat.posOffsetAmplitude; // Y轴偏移（±5px）
+        
+        // 2. 定位到画布中心并应用缩放（先平移，再缩放，避免文字偏移）
+        var textX = canvas.width / 2;
+        var textY = canvas.height / 2 + beatYOffset; // 加入垂直偏移
+        context.translate(textX, textY); // 平移到中心
+        context.scale(beatScale, beatScale); // 应用心跳缩放
+        
+        // 3. 设置文字样式
+        context.font = "bold " + settings.textBeat.baseSize + "px Microsoft YaHei, SimHei, Arial";
         context.fillStyle = "#ff99cc"; // 浅粉色，比粒子稍亮更醒目
         context.textAlign = "center"; // 水平居中
         context.textBaseline = "middle"; // 垂直居中
-        // 添加文字阴影，提升辨识度
+        
+        // 4. 添加文字阴影，提升辨识度
         context.shadowColor = "rgba(234, 128, 176, 0.8)";
         context.shadowBlur = 10;
         context.shadowOffsetX = 2;
         context.shadowOffsetY = 2;
-        // 在画布中心绘制文字
-        context.fillText("冰冰", canvas.width / 2, canvas.height / 2);
+        
+        // 5. 绘制文字（此时画布原点已平移到中心，所以坐标是0,0）
+        context.fillText("冰冰", 0, 0);
+        
         context.restore(); // 恢复画布状态
         // ==========================================
       }
